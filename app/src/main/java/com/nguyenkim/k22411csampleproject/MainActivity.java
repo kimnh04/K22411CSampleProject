@@ -20,6 +20,11 @@ public class MainActivity extends AppCompatActivity {
 
     ImageView imgCustomer;
     TextView txtCustomer;
+    ImageView imgCategory;
+    TextView txtCategory;
+    ImageView imgProduct;
+    TextView txtProduct;
+
 
 
     @Override
@@ -53,12 +58,71 @@ public class MainActivity extends AppCompatActivity {
                 openEmployeeManagementActivity();
             }
         });
+        imgCustomer.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                openCustomerManagementActivity();
+            }
+        });
+
+        imgCustomer.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                openCustomerManagementActivity();
+            }
+        });
+        txtCustomer.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                openCustomerManagementActivity();
+            }
+        });
+        imgCategory.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                openCategoryManagementActivity();
+            }
+        });
+        txtCategory.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                openCategoryManagementActivity();
+            }
+        });
+        imgProduct.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                openProductManagementActivity();
+            }
+        });
+        txtProduct.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                openProductManagementActivity();
+            }
+        });
+
 
     }
 
     void openEmployeeManagementActivity()
     {
         Intent intent = new Intent(MainActivity.this, EmployeeManagementActivity.class);
+        startActivity(intent);
+    }
+    void openCustomerManagementActivity()
+    {
+        Intent intent = new Intent(MainActivity.this, CustomerManagementActivity.class);
+        startActivity(intent);
+    }
+    void openCategoryManagementActivity()
+    {
+        Intent intent = new Intent(MainActivity.this, CategoryManagementActivity.class);
+        startActivity(intent);
+    }
+    void openProductManagementActivity()
+    {
+        Intent intent = new Intent(MainActivity.this, ProductManagementActivity.class);
         startActivity(intent);
     }
 
@@ -68,5 +132,10 @@ public class MainActivity extends AppCompatActivity {
         txtEmployee = findViewById(R.id.txtEmployee);
         imgCustomer = findViewById(R.id.imgCustomer);
         txtCustomer = findViewById(R.id.txtCustomer);
+        imgCategory = findViewById(R.id.imgCategory);
+        txtCategory = findViewById(R.id.txtCategory);
+        imgProduct = findViewById(R.id.imgProduct);
+        txtProduct = findViewById(R.id.txtProduct);
     }
+
 }

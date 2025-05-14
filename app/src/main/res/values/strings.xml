@@ -23,5 +23,7 @@
     <string name="title_slim">Slim</string>
     <string name="title_normal">Normal</string>
     <string name="title_fat">Fat</string>
+    <string name="title_category">Category</string>
+    <string name="title_product">Product</string>
 
 </resources>
