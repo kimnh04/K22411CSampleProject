@@ -86,6 +86,7 @@ public class ProductManagementActivity extends AppCompatActivity {
                 Intent intent = new Intent(ProductManagementActivity.this, ProductDetailActivity.class);
                 intent.putExtra("SELECTED_PRODUCT", p);
                 startActivity(intent);
+//                return false;
             }
         });
     }

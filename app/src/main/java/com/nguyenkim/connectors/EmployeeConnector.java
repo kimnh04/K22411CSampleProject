@@ -1,9 +1,41 @@
 package com.nguyenkim.connectors;
 
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+
 import com.nguyenkim.k22411csampleproject.models.Employee;
 import com.nguyenkim.k22411csampleproject.models.ListEmployee;
 
 public class EmployeeConnector {
+    public Employee login(SQLiteDatabase database, String usr, String pwd)
+    {
+        // lấy code từ slide 10 tr 17 phần query:
+        Cursor cursor = database.rawQuery(
+                "SELECT * FROM Employee WHERE Username=? AND Password=?",
+                new String[]{usr, pwd});
+        Employee emp = null;
+
+        while (cursor.moveToNext())
+        {
+            int id = cursor.getInt(0);
+            String name = cursor.getString(1);
+            String email = cursor.getString(2);
+            String phone = cursor.getString(3);
+            String username = cursor.getString(4);
+            String password = cursor.getString(5);
+            emp = new Employee();
+            emp.setId(id);
+            emp.setName(name);
+            emp.setEmail(email);
+            emp.setPhone(phone);
+            emp.setUsername(username);
+            emp.setPassword(password);
+
+        }
+        cursor.close();
+        return emp; // trả về đối tượng nhân viên nếu tìm thấy
+    }
+
     public Employee login(String usr,String pwd)
     {
         // khi làm thực tế gom đoạn dưới sau bằng câu truy vấn là xong
