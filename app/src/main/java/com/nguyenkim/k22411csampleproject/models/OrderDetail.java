@@ -81,7 +81,10 @@ public class OrderDetail implements Serializable {
     }
 
     public double getTotal() {
-        return total;
+        double subtotal = price * quantity;
+        double vatAmount = subtotal * (vat / 100);
+        double discountAmount = subtotal * (discount / 100);
+        return subtotal + vatAmount - discountAmount;
     }
 
     public void setTotal(double total) {
