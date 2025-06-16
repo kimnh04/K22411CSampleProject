@@ -1,7 +1,9 @@
 package com.nguyenkim.k22411csampleproject;
 
 import android.content.Intent;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -24,9 +26,8 @@ import com.nguyenkim.connectors.SQLiteConnector;
 import com.nguyenkim.k22411csampleproject.models.Customer;
 import com.nguyenkim.k22411csampleproject.models.ListCustomer;
 
-import java.lang.reflect.Array;
-
 public class CustomerManagementActivity extends AppCompatActivity {
+
     ListView lvCustomer;
     ArrayAdapter<Customer> adapter;
     CustomerConnector connector;
@@ -41,111 +42,125 @@ public class CustomerManagementActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+
         addViews();
         addEvents();
-
-
-    }
-
-    private void addEvents() {
-//        lvCustomer.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-//            @Override
-//            public boolean onItemLongClick(AdapterView<?> parent, View view, int i, long l) {
-//                Customer selected = (Customer) adapter.getItem(i);
-//                adapter.remove(selected);
-//                return false;
-//            }
-//        });
-        lvCustomer.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-            @Override
-            public boolean onItemLongClick(AdapterView<?> parent, View view, int i, long l) {
-                Customer c = adapter.getItem(i);
-                displayCustomerDetailActivity(c);
-                return false;
-            }
-        });
-
-    }
-
-    private void displayCustomerDetailActivity(Customer c) {
-        Intent intent=new Intent(CustomerManagementActivity.this, CustomerDetailActivity.class);
-        intent.putExtra("SELECTED_CUSTOMER",c);
-        startActivity(intent);
     }
 
     private void addViews() {
         lvCustomer = findViewById(R.id.lvCustomer);
-        adapter=new ArrayAdapter<>(
-                CustomerManagementActivity.this,
-                android.R.layout.simple_list_item_1
-        );
-        connector=new CustomerConnector();
-        ListCustomer lc= connector.getAllCustomers(new SQLiteConnector(this).openDatabase());
+        adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1);
+        connector = new CustomerConnector();
+
+        SQLiteConnector dbConnector = new SQLiteConnector(this);
+        SQLiteDatabase db = dbConnector.openDatabase();
+
+        ListCustomer lc = connector.getAllCustomers(db);
         adapter.addAll(lc.getCustomers());
         lvCustomer.setAdapter(adapter);
     }
 
+    private void addEvents() {
+        lvCustomer.setOnItemLongClickListener((parent, view, position, id) -> {
+            Customer c = adapter.getItem(position);
+            displayCustomerDetailActivity(c);
+            return true;
+        });
+    }
+
+    private void displayCustomerDetailActivity(Customer c) {
+        Intent intent = new Intent(this, CustomerDetailActivity.class);
+        intent.putExtra("SELECTED_CUSTOMER", c);
+        startActivityForResult(intent, 400); // 400: sửa dữ liệu
+    }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater inflater= getMenuInflater();
-        inflater.inflate(R.menu.option_menu_customer,menu);
-        return super.onCreateOptionsMenu(menu);
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.option_menu_customer, menu);
+        return true;
     }
+
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        if (item.getItemId() == R.id.menu_new_customer)
-        {
-            Toast.makeText(CustomerManagementActivity.this,
-                    "Mở màn hình thêm mới khách hàng", Toast.LENGTH_SHORT).show();
-            Intent intent=new Intent(CustomerManagementActivity.this, CustomerDetailActivity.class);
-            // đóng gói và đặt mã request code là 300
-            startActivityForResult(intent, 300);
-
-            // startActivity(intent);
-        }
-        else if (item.getItemId()==R.id.menu_broadcast_advertising)
-        {
-            Toast.makeText(CustomerManagementActivity.this,
-                    "Gửi quảng cáo hàng loạt tới khách hàng",
-                    Toast.LENGTH_SHORT).show();
-        }
-        else if (item.getItemId()==R.id.menu_help)
-        {
-            Toast.makeText(CustomerManagementActivity.this,
-                    "Mở website hướng dẫn sử dụng",
-                    Toast.LENGTH_SHORT).show();
+        if (item.getItemId() == R.id.menu_new_customer) {
+            Intent intent = new Intent(this, CustomerDetailActivity.class);
+            startActivityForResult(intent, 300); // 300: thêm mới
+            return true;
+        } else if (item.getItemId() == R.id.menu_broadcast_advertising) {
+            Toast.makeText(this, "Gửi quảng cáo hàng loạt tới khách hàng", Toast.LENGTH_LONG).show();
+            return true;
+        } else if (item.getItemId() == R.id.menu_help) {
+            Toast.makeText(this, "Mở website hướng dẫn sử dụng", Toast.LENGTH_LONG).show();
+            return true;
         }
         return super.onOptionsItemSelected(item);
     }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        //trường hợp xử lý cho NEW CUSTOMER ta chỉ quan tâm 300 và 500 do ta định nghĩa:
-        if (requestCode==300 && resultCode==500)
-        {
-            //lấy gói tin ra:
-            Customer c= (Customer) data.getSerializableExtra("NEW_CUSTOMER");
-            process_save_customer(c);
+        if (data == null) return;
+
+        if (requestCode == 300 && resultCode == 500) { // thêm mới
+            Customer c = (Customer) data.getSerializableExtra("NEW_CUSTOMER");
+            if (c != null) {
+                processSaveNewCustomer(c);
+            } else {
+                Log.e("CustomerManagement", "NEW_CUSTOMER is null when adding");
+            }
+        } else if (requestCode == 400 && resultCode == 500) { // cập nhật
+            Customer c = (Customer) data.getSerializableExtra("NEW_CUSTOMER");
+            if (c != null) {
+                processUpdateCustomer(c);
+            } else {
+                Log.e("CustomerManagement", "NEW_CUSTOMER is null when updating");
+            }
+        } else if (requestCode == 400 && resultCode == 600) { // xóa
+            String id = data.getStringExtra("CUSTOMER_TO_REMOVE");
+            if (id != null) {
+                processRemoveCustomer(id);
+            } else {
+                Log.e("CustomerManagement", "CUSTOMER_TO_REMOVE is null when deleting");
+            }
         }
     }
 
-    private void process_save_customer(Customer c) {
-        boolean result = connector.isExist(c);
-        if(result==true)
-        {
-            // tức là customer đã tồn tại trong hệ thống
-            // họ có nhu cầu sửa các thông tin khác, ví dụ:
-            // ĐỊA CHỈ, PAYMENT METHODS
-//            Toast.makeText()
-        }
-        else
-        {
-            connector.addCustomer(c);
-            adapter.clear();
-            adapter.addAll(connector.get_all_customers());
-            // Thêm mới cus
+    private void processSaveNewCustomer(Customer c) {
+        SQLiteDatabase db = new SQLiteConnector(this).openDatabase();
+        CustomerConnector cc = new CustomerConnector();
+        long flag = cc.saveNewCustomer(c, db);
+        if (flag > 0) {
+            refreshCustomerList(db, cc);
+        } else {
+            Toast.makeText(this, "Thêm khách hàng thất bại", Toast.LENGTH_SHORT).show();
         }
     }
 
+    private void processUpdateCustomer(Customer c) {
+        SQLiteDatabase db = new SQLiteConnector(this).openDatabase();
+        CustomerConnector cc = new CustomerConnector();
+        long flag = cc.saveUpdateCustomer(c, db);
+        if (flag > 0) {
+            refreshCustomerList(db, cc);
+        } else {
+            Toast.makeText(this, "Cập nhật khách hàng thất bại", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void processRemoveCustomer(String id) {
+        SQLiteDatabase db = new SQLiteConnector(this).openDatabase();
+        CustomerConnector cc = new CustomerConnector();
+        long flag = cc.removeCustomer(Integer.parseInt(id), db); // ép kiểu String -> int
+        if (flag > 0) {
+            refreshCustomerList(db, cc);
+        } else {
+            Toast.makeText(this, "Xóa khách hàng thất bại", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void refreshCustomerList(SQLiteDatabase db, CustomerConnector cc) {
+        adapter.clear();
+        adapter.addAll(cc.getAllCustomers(db).getCustomers());
+    }
 }
-

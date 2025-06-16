@@ -26,6 +26,10 @@ public class MainActivity extends AppCompatActivity {
     TextView txtProduct;
     ImageView imgPaymentMethod;
     TextView txtPaymentMethod;
+    ImageView imgOrders;
+    TextView txtOrders;
+    ImageView imgTelephony;
+    TextView txtTelephony;
 
 
 
@@ -110,6 +114,33 @@ public class MainActivity extends AppCompatActivity {
                 openPaymentMethodActivity();
             }
         });
+        imgOrders.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(MainActivity.this, OrdersViewerActivity.class);
+                startActivity(intent);
+            }
+        });
+        txtOrders.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(MainActivity.this, OrdersViewerActivity.class);
+                startActivity(intent);
+            }
+        });
+        imgTelephony.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                openTelephonyActivity();
+            }
+        });
+        txtTelephony.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                openTelephonyActivity();
+            }
+        });
+
     }
 
     private void openAdvancedProductManagementActivity() {
@@ -136,6 +167,10 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(MainActivity.this, PaymentMethodActivity.class);
         startActivity(intent);
     }
+    void openTelephonyActivity() {
+        Intent intent = new Intent(MainActivity.this, TelephonyActivity.class);
+        startActivity(intent);
+    }
 
     private void addViews() {
         imgEmployee = findViewById(R.id.imgEmployee);
@@ -148,6 +183,10 @@ public class MainActivity extends AppCompatActivity {
         txtProduct = findViewById(R.id.txtProduct);
         imgPaymentMethod = findViewById(R.id.imgPaymentMethod);
         txtPaymentMethod = findViewById(R.id.txtPaymentMethod);
+        imgOrders = findViewById(R.id.imgOrders);
+        txtOrders = findViewById(R.id.txtOrders);
+        imgTelephony = findViewById(R.id.imgTelephony);
+        txtTelephony = findViewById(R.id.txtTelephony);
     }
 
 }

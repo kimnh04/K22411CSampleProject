@@ -47,6 +47,7 @@
     <string name="title_new_product">New Product</string>
     <string name="title_payment_method">Payment Method</string>
     <string name="title_order">Orders</string>
+    <string name="title_telephony">Telephony</string>
 
 
 </resources>

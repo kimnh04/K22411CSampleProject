@@ -44,62 +44,73 @@ public class CustomerDetailActivity extends AppCompatActivity {
             @Override
             public void onClick(View view){
                 process_save_customer();
-            };
-
+            }
         });
 
-
+        btnRemove.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                process_remove_customer();
+            }
+        });
     }
 
     private void process_save_customer() {
-        Customer c=new Customer();
-        c.setId(Integer.parseInt(edt_customer_id.getText().toString()));
+        Customer c = new Customer();
+        String id = edt_customer_id.getText().toString().trim();
+        if (id.length() > 0) {
+            c.setId(Integer.parseInt(id));
+        }
+
         c.setName(edt_customer_name.getText().toString());
         c.setEmail(edt_customer_email.getText().toString());
         c.setPhone(edt_customer_phone.getText().toString());
         c.setUsername(edt_customer_username.getText().toString());
-        c.setPhone(edt_customer_phone.getText().toString());
+        c.setPassword(edt_customer_password.getText().toString()); // bổ sung set password
 
-        // Lấy Intent từ màn hình gọi nó
-        Intent intent=getIntent();
-        // đóng gói dữ liệu vào intent
-        intent.putExtra("NEW CUSTOMER", c);
-        // đóng dấu là sẽ gửi gói hàng này đi
-        setResult(500, intent);
-        // đóng màn hình này lại, để màn hình gọi nó nhận đc kết quả
+        // Đóng gói vào Intent và trả kết quả
+        Intent resultIntent = new Intent();
+        resultIntent.putExtra("NEW_CUSTOMER", c); // sửa key đúng
+        setResult(500, resultIntent);
+        finish();
+    }
+
+    private void process_remove_customer() {
+        Intent resultIntent = new Intent();
+        String id = edt_customer_id.getText().toString();
+        resultIntent.putExtra("CUSTOMER_TO_REMOVE", id);
+        setResult(600, resultIntent);
         finish();
     }
 
     private void addViews() {
-        edt_customer_id=findViewById(R.id.edt_customer_id);
-        edt_customer_name=findViewById(R.id.edt_customer_name);
-        edt_customer_email=findViewById(R.id.edt_customer_email);
-        edt_customer_phone=findViewById(R.id.edt_customer_phone);
-        edt_customer_username=findViewById(R.id.edt_customer_username);
-        edt_customer_password=findViewById(R.id.edt_customer_password);
-        // Lấy dữ liệu từ Intent
-        display_infor();
+        edt_customer_id = findViewById(R.id.edt_customer_id);
+        edt_customer_name = findViewById(R.id.edt_customer_name);
+        edt_customer_email = findViewById(R.id.edt_customer_email);
+        edt_customer_phone = findViewById(R.id.edt_customer_phone);
+        edt_customer_username = findViewById(R.id.edt_customer_username);
+        edt_customer_password = findViewById(R.id.edt_customer_password);
+        btnNew = findViewById(R.id.btnNew);
+        btnSave = findViewById(R.id.btnSave);
+        btnRemove = findViewById(R.id.btnRemove);
 
-        btnNew=findViewById(R.id.btnNew);
-        btnSave=findViewById(R.id.btnSave);
-        btnRemove=findViewById(R.id.btnRemove);
+        display_infor();
     }
 
     private void display_infor() {
-        // Lấy intent từ bên CustomerManagementActivity gửi qua;
-         Intent intent = getIntent();
-         // Lấy dữ liệu SELECTED_CUSTOMER từ intent
+        Intent intent = getIntent();
         Customer c = (Customer) intent.getSerializableExtra("SELECTED_CUSTOMER");
-        if(c==null)
-            return;
-            // Hiển thị thông tin khách hàng lên các EditText
-        edt_customer_id.setText(c.getId()+"");
+        if (c == null) {
+            return; // đang tạo mới
+        }
+
+        // Nếu có dữ liệu, hiển thị và không cho chỉnh sửa ID
+        edt_customer_id.setText(String.valueOf(c.getId()));
+        edt_customer_id.setEnabled(false); // tùy chọn: không cho sửa ID nếu cập nhật
         edt_customer_name.setText(c.getName());
         edt_customer_email.setText(c.getEmail());
         edt_customer_phone.setText(c.getPhone());
         edt_customer_username.setText(c.getUsername());
         edt_customer_password.setText(c.getPassword());
-        // Chuyển đổi các EditText thành không thể chỉnh sửa
     }
-
 }
