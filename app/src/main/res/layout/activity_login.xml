@@ -17,6 +17,12 @@
             android:layout_height="wrap_content"
             android:orientation="vertical" >
 
+            <TextView
+                android:id="@+id/txtNetworkType"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="TextView" />
+
             <ImageView
                 android:id="@+id/imageView"
                 android:layout_width="match_parent"
@@ -78,6 +84,7 @@
                     android:onClick="do_exit"
                     app:srcCompat="@mipmap/ic_logo_exit" />
             </LinearLayout>
+
         </LinearLayout>
     </ScrollView>
 
