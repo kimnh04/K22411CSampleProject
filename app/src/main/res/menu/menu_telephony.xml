@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/menu_viettel"
+        android:title="@string/title_viettel"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/menu_mobifone"
+        android:title="@string/title_mobifone"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/menu_other"
+        android:title="@string/title_otherphone"
+        app:showAsAction="never" />
+</menu>

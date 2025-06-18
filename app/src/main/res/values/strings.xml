@@ -51,6 +51,9 @@
     <string name="title_contact_name">Contact Name:</string>
     <string name="title_phone_number">Phone Number:</string>
     <string name="title_body">Body</string>
+    <string name="title_viettel">Viettel</string>
+    <string name="title_mobifone">Mobifone</string>
+    <string name="title_otherphone">Others</string>
 
 
 </resources>

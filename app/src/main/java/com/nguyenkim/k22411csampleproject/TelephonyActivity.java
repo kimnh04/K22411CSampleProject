@@ -7,86 +7,41 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
-import android.view.View;
-import android.widget.AdapterView;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.ListView;
+import android.widget.Toast;
 
-import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 
 import com.nguyenkim.adapters.TelephonyInforAdapter;
 import com.nguyenkim.k22411csampleproject.models.TelephonyInfor;
+import com.nguyenkim.utils.NetworkUtils;
+
+import java.util.function.Predicate;
 
 public class TelephonyActivity extends AppCompatActivity {
-    ListView lvTelephonyinfor;
-    TelephonyInforAdapter adapter;
+    private static final int REQUEST_READ_CONTACTS = 100;
+    private static final int REQUEST_CALL_PHONE = 200;
+
+    private ListView lvTelephonyinfor;
+    private TelephonyInforAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_telephony);
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });
         addViews();
-        getAllContacts();
-        addEvents();
-    }
 
-    private void addEvents() {
-        lvTelephonyinfor.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                TelephonyInfor ti = adapter.getItem(position);
-                makeAPhoneCall(ti);
-            }
-        });
-    }
-
-    private void makeAPhoneCall(TelephonyInfor ti) {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
-            // Request the CALL_PHONE permission
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CALL_PHONE}, 1);
+        if (lacksPermission(Manifest.permission.READ_CONTACTS)) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_CONTACTS}, REQUEST_READ_CONTACTS);
         } else {
-            // Permission already granted, make the call
-            Uri uri = Uri.parse("tel:" + ti.getPhone());
-            Intent intent = new Intent(Intent.ACTION_CALL, uri);
-            startActivity(intent);
+            getAllContacts();
         }
-    }
 
-    private void getAllContacts() {
-        Uri uri = ContactsContract.CommonDataKinds.Phone.CONTENT_URI;
-        Cursor cursor = null;
-        try {
-            cursor = getContentResolver().query(uri, null, null, null, null);
-            if (cursor == null) return;
-
-            adapter.clear();
-            while (cursor.moveToNext()) {
-                int nameIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME);
-                int phoneIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER);
-
-                String name = cursor.getString(nameIndex);  // Get contact name
-                String phone = cursor.getString(phoneIndex); // Get phone number
-
-                TelephonyInfor ti = new TelephonyInfor();
-                ti.setName(name);
-                ti.setPhone(phone);
-                adapter.add(ti); // Add to adapter
-            }
-        } finally {
-            if (cursor != null) {
-                cursor.close(); // Ensure cursor is closed
-            }
-        }
+        addEvents();
     }
 
     private void addViews() {
@@ -95,39 +50,113 @@ public class TelephonyActivity extends AppCompatActivity {
         lvTelephonyinfor.setAdapter(adapter);
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == 1) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // Permission granted
-                TelephonyInfor ti = adapter.getItem(lvTelephonyinfor.getCheckedItemPosition());
-                if (ti != null) {
-                    makeAPhoneCall(ti);
-                }
-            } else {
-                // Permission denied
+    private void addEvents() {
+        lvTelephonyinfor.setOnItemClickListener((parent, view, position, id) -> {
+            TelephonyInfor ti = adapter.getItem(position);
+            if (ti != null) {
+                dialupCall(ti); // default to dial-up when clicking
+            }
+        });
+    }
+
+    // 📞 Direct call (requires permission)
+    public void directCall(TelephonyInfor ti) {
+        if (lacksPermission(Manifest.permission.CALL_PHONE)) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CALL_PHONE}, REQUEST_CALL_PHONE);
+        } else {
+            Intent intent = new Intent(Intent.ACTION_CALL, Uri.parse("tel:" + ti.getPhone()));
+            startActivity(intent);
+        }
+    }
+
+    // ☎️ Dial-up call (opens dialer, doesn't require CALL_PHONE permission)
+    public void dialupCall(TelephonyInfor ti) {
+        Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + ti.getPhone()));
+        startActivity(intent);
+    }
+
+    private void getAllContacts() {
+        Uri uri = ContactsContract.CommonDataKinds.Phone.CONTENT_URI;
+        try (Cursor cursor = getContentResolver().query(uri, null, null, null, null)) {
+            if (cursor == null) return;
+
+            adapter.clear();
+            int nameIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME);
+            int phoneIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER);
+
+            if (nameIndex == -1 || phoneIndex == -1) return;
+
+            while (cursor.moveToNext()) {
+                String name = cursor.getString(nameIndex);
+                String phone = cursor.getString(phoneIndex);
+                adapter.add(new TelephonyInfor(name, phone));
             }
         }
     }
 
-    public void directCall(TelephonyInfor ti) {
-        Uri uri = Uri.parse("tel:" + ti.getPhone());
-        Intent intent=new Intent(Intent.ACTION_CALL);
-        intent.setData(uri);
-        startActivity(intent);
-    }
-    public void dialupCall(TelephonyInfor ti) {
-        Uri uri = Uri.parse("tel:" + ti.getPhone());
-        Intent intent = new Intent(Intent.ACTION_DIAL);
-        intent.setData(uri);
-        startActivity(intent);
-    }
-    public void sendSms(TelephonyInfor ti) {
-//        Uri uri = Uri.parse("smsto:" + ti.getPhone());
-//        Intent intent = new Intent(Intent.ACTION_SENDTO, uri);
-//        intent.putExtra("sms_body", "Hello, this is a test message!");
-//        startActivity(intent);
+    private boolean lacksPermission(String permission) {
+        return ActivityCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED;
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_telephony, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        int id = item.getItemId();
+
+        if (id == R.id.menu_viettel) {
+            filterContacts(NetworkUtils::isViettel);
+            Toast.makeText(this, "Viettel selected", Toast.LENGTH_SHORT).show();
+            return true;
+        } else if (id == R.id.menu_mobifone) {
+            filterContacts(NetworkUtils::isMobifone);
+            Toast.makeText(this, "Mobifone selected", Toast.LENGTH_SHORT).show();
+            return true;
+        } else if (id == R.id.menu_other) {
+            filterContacts(NetworkUtils::isOther);
+            Toast.makeText(this, "Other selected", Toast.LENGTH_SHORT).show();
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void filterContacts(Predicate<String> filter) {
+        Uri uri = ContactsContract.CommonDataKinds.Phone.CONTENT_URI;
+        try (Cursor cursor = getContentResolver().query(uri, null, null, null, null)) {
+            if (cursor == null) return;
+
+            adapter.clear();
+            int nameIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME);
+            int phoneIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER);
+
+            if (nameIndex == -1 || phoneIndex == -1) return;
+
+            while (cursor.moveToNext()) {
+                String name = cursor.getString(nameIndex);
+                String phone = cursor.getString(phoneIndex);
+                if (filter.test(phone)) {
+                    adapter.add(new TelephonyInfor(name, phone));
+                }
+            }
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_READ_CONTACTS) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                getAllContacts();
+            } else {
+                Toast.makeText(this, "Permission denied to read contacts", Toast.LENGTH_SHORT).show();
+            }
+        } else if (requestCode == REQUEST_CALL_PHONE) {
+            // Optional: handle re-requested permission for direct call
+        }
+    }
 }
